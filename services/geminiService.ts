@@ -4,7 +4,7 @@ import {
   THEMES, STYLES, TYPES, FABRICS, DETAILS, FEELINGS, SCENTS, OWNERS, FEATURED_ITEMS 
 } from "../data/gameData";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];

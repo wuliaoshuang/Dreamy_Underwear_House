@@ -4,6 +4,7 @@ import { GachaItem, RarityColors, RECYCLE_VALUES, Rarity } from '../types';
 import { Card } from './Card';
 import { Heart, PackageOpen, X, Trash2, Flower, User, Zap, Filter } from 'lucide-react';
 import { Button } from './Button';
+import { HapticsService } from '../services/hapticsService';
 
 interface InventoryProps {
   items: GachaItem[];
@@ -42,6 +43,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
 
   const handleSell = () => {
     if (selectedItem) {
+        HapticsService.heavy(); // 删除卡片时的重度反馈
         onSellItem(selectedItem.id);
         setSelectedItem(null);
     }
