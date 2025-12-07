@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GachaMachine } from './components/GachaMachine';
 import { Inventory } from './components/Inventory';
 import { GachaItem, GACHA_COST, RECYCLE_VALUES } from './types';
 import { Grid, Gift, Cat, Cloud, Coins } from 'lucide-react';
-import { HapticsService } from './services/hapticsService';
+import { db } from './utils/db';
 
 enum Tab {
   GACHA = 'gacha',
@@ -15,33 +15,71 @@ const App: React.FC = () => {
   const [inventory, setInventory] = useState<GachaItem[]>([]);
   const [currency, setCurrency] = useState<number>(1000); // Start with 1000 coins
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Use a ref to prevent saving during the initial load phase
+  const isInitialMount = useRef(true);
 
-  // Load data from LocalStorage on startup
+  // Load data from IndexedDB (with fallback migration from localStorage)
   useEffect(() => {
-    const savedInventory = localStorage.getItem('gacha_inventory');
-    const savedCurrency = localStorage.getItem('gacha_currency');
-    
-    if (savedInventory) {
+    const loadData = async () => {
       try {
-        setInventory(JSON.parse(savedInventory));
-      } catch (e) {
-        console.error("Failed to parse inventory", e);
+        // 1. Try to get data from IndexedDB
+        const dbInventory = await db.get<GachaItem[]>('gacha_inventory');
+        const dbCurrency = await db.get<number>('gacha_currency');
+
+        // 2. If IndexedDB is empty, check localStorage (Migration path)
+        if (!dbInventory && !dbCurrency) {
+          const localInventory = localStorage.getItem('gacha_inventory');
+          const localCurrency = localStorage.getItem('gacha_currency');
+
+          if (localInventory) {
+            const parsedInv = JSON.parse(localInventory);
+            setInventory(parsedInv);
+            // Migrate to DB immediately
+            await db.set('gacha_inventory', parsedInv);
+          }
+          
+          if (localCurrency) {
+            const parsedCurr = parseInt(localCurrency, 10);
+            setCurrency(parsedCurr);
+            await db.set('gacha_currency', parsedCurr);
+          }
+
+          // Optional: Clear localStorage to free up space after successful migration
+          // localStorage.removeItem('gacha_inventory');
+          // localStorage.removeItem('gacha_currency');
+        } else {
+          // Normal load from DB
+          if (dbInventory) setInventory(dbInventory);
+          if (dbCurrency !== null && dbCurrency !== undefined) setCurrency(dbCurrency);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setIsLoaded(true);
+        // Small delay to ensure we don't trigger the save effect immediately
+        setTimeout(() => {
+            isInitialMount.current = false;
+        }, 100);
       }
-    }
-    
-    if (savedCurrency) {
-      setCurrency(parseInt(savedCurrency, 10));
-    }
-    
-    setIsLoaded(true);
+    };
+
+    loadData();
   }, []);
 
-  // Save data whenever it changes
+  // Save data to IndexedDB whenever it changes
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('gacha_inventory', JSON.stringify(inventory));
-      localStorage.setItem('gacha_currency', currency.toString());
-    }
+    // Skip saving if we haven't finished loading or if it's the very first render
+    if (!isLoaded || isInitialMount.current) return;
+
+    const saveData = async () => {
+      await db.set('gacha_inventory', inventory);
+      await db.set('gacha_currency', currency);
+    };
+
+    // Debounce slightly to avoid slamming the DB
+    const timeoutId = setTimeout(saveData, 500);
+    return () => clearTimeout(timeoutId);
   }, [inventory, currency, isLoaded]);
 
   const handleItemObtained = (item: GachaItem) => {
@@ -52,7 +90,6 @@ const App: React.FC = () => {
   const handleSellItem = (id: string) => {
     const itemToSell = inventory.find(i => i.id === id);
     if (itemToSell) {
-      HapticsService.medium(); // 出售时触发中等反馈
       const value = RECYCLE_VALUES[itemToSell.rarity];
       setInventory(prev => prev.filter(i => i.id !== id));
       setCurrency(prev => prev + value);
@@ -63,7 +100,8 @@ const App: React.FC = () => {
     setCurrency(prev => prev + amount);
   };
 
-  if (!isLoaded) return null; // Prevent flash of empty state
+  // Prevent flash of empty state or default values
+  if (!isLoaded) return null; 
 
   return (
     <div className="h-[100dvh] w-full md:max-w-md md:mx-auto bg-[#fff0f5] shadow-2xl overflow-hidden flex flex-col relative font-fredoka">
@@ -117,10 +155,7 @@ const App: React.FC = () => {
       <div className="absolute bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none safe-bottom-padding">
         <nav className="bg-white/95 backdrop-blur-xl border border-pink-100 p-1.5 rounded-full shadow-2xl flex items-center gap-1 pointer-events-auto w-[85%] max-w-xs justify-between">
           <button 
-            onClick={() => {
-              HapticsService.light();
-              setCurrentTab(Tab.GACHA);
-            }}
+            onClick={() => setCurrentTab(Tab.GACHA)}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-all duration-300 active:scale-95
               ${currentTab === Tab.GACHA 
                 ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 
@@ -131,10 +166,7 @@ const App: React.FC = () => {
           </button>
 
           <button 
-            onClick={() => {
-              HapticsService.light();
-              setCurrentTab(Tab.INVENTORY);
-            }}
+            onClick={() => setCurrentTab(Tab.INVENTORY)}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-all duration-300 active:scale-95
               ${currentTab === Tab.INVENTORY 
                 ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 

@@ -4,7 +4,6 @@ import { GachaItem, RarityColors, RECYCLE_VALUES, Rarity } from '../types';
 import { Card } from './Card';
 import { Heart, PackageOpen, X, Sparkles, Trash2, Flower, User, Zap } from 'lucide-react';
 import { Button } from './Button';
-import { HapticsService } from '../services/hapticsService';
 
 interface InventoryProps {
   items: GachaItem[];
@@ -41,7 +40,6 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
 
   const handleSell = () => {
     if (selectedItem) {
-        HapticsService.heavy(); // 删除卡片时的重度反馈
         onSellItem(selectedItem.id);
         setSelectedItem(null);
     }
@@ -58,14 +56,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
         {sortedItems.map((item) => (
-          <Card 
-            key={item.id} 
-            item={item} 
-            onClick={() => {
-              HapticsService.light(); // 点击卡片时的轻微反馈
-              setSelectedItem(item);
-            }} 
-          />
+          <Card key={item.id} item={item} onClick={() => setSelectedItem(item)} />
         ))}
       </div>
 
@@ -81,10 +72,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
                         <span className={`text-[10px] font-bold ${RarityColors[selectedItem.rarity].text} uppercase tracking-wider`}>{selectedItem.rarity}</span>
                         <h3 className="text-base font-bold text-gray-800 line-clamp-1">{selectedItem.name}</h3>
                      </div>
-                     <button onClick={() => {
-                       HapticsService.light();
-                       setSelectedItem(null);
-                     }} className="bg-white/50 p-1.5 rounded-full hover:bg-white transition-colors">
+                     <button onClick={() => setSelectedItem(null)} className="bg-white/50 p-1.5 rounded-full hover:bg-white transition-colors">
                          <X size={18} className="text-gray-500" />
                      </button>
                 </div>
