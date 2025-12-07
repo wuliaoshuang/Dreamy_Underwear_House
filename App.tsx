@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GachaMachine } from './components/GachaMachine';
 import { Inventory } from './components/Inventory';
+import { CollectionBook } from './components/CollectionBook';
 import { GachaItem, GACHA_COST, RECYCLE_VALUES } from './types';
-import { Grid, Gift, Cat, Cloud, Coins } from 'lucide-react';
+import { Grid, Gift, Cat, Cloud, Coins, Book } from 'lucide-react';
 import { db } from './utils/db';
 
 enum Tab {
   GACHA = 'gacha',
-  INVENTORY = 'inventory'
+  INVENTORY = 'inventory',
+  COLLECTION = 'collection'
 }
 
 const App: React.FC = () => {
@@ -45,9 +47,6 @@ const App: React.FC = () => {
             await db.set('gacha_currency', parsedCurr);
           }
 
-          // Optional: Clear localStorage to free up space after successful migration
-          // localStorage.removeItem('gacha_inventory');
-          // localStorage.removeItem('gacha_currency');
         } else {
           // Normal load from DB
           if (dbInventory) setInventory(dbInventory);
@@ -137,43 +136,58 @@ const App: React.FC = () => {
 
       {/* Main Content - Scrollable Area */}
       <main className="flex-1 overflow-y-auto scrollbar-hide relative z-10 overscroll-contain">
-        {currentTab === Tab.GACHA ? (
+        {currentTab === Tab.GACHA && (
           <GachaMachine 
             onItemObtained={handleItemObtained} 
             currency={currency}
             onAddCoins={handleAddCoins}
           />
-        ) : (
+        )}
+        {currentTab === Tab.INVENTORY && (
           <Inventory 
             items={inventory} 
             onSellItem={handleSellItem}
           />
         )}
+        {currentTab === Tab.COLLECTION && (
+          <CollectionBook inventory={inventory} />
+        )}
       </main>
 
       {/* Floating Bottom Navigation */}
       <div className="absolute bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none safe-bottom-padding">
-        <nav className="bg-white/95 backdrop-blur-xl border border-pink-100 p-1.5 rounded-full shadow-2xl flex items-center gap-1 pointer-events-auto w-[85%] max-w-xs justify-between">
+        <nav className="bg-white/95 backdrop-blur-xl border border-pink-100 p-1.5 rounded-full shadow-2xl flex items-center gap-1 pointer-events-auto w-[90%] max-w-sm justify-between">
           <button 
             onClick={() => setCurrentTab(Tab.GACHA)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-all duration-300 active:scale-95
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-full transition-all duration-300 active:scale-95
               ${currentTab === Tab.GACHA 
                 ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 
                 : 'text-gray-400 hover:text-pink-400 hover:bg-pink-50'}`}
           >
             <Gift size={20} className={currentTab === Tab.GACHA ? 'animate-[spin-slow_3s_linear_infinite]' : ''} />
-            <span className="font-bold text-sm">扭蛋机</span>
+            <span className="font-bold text-[10px]">扭蛋机</span>
+          </button>
+
+          <button 
+            onClick={() => setCurrentTab(Tab.COLLECTION)}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-full transition-all duration-300 active:scale-95
+              ${currentTab === Tab.COLLECTION 
+                ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 
+                : 'text-gray-400 hover:text-pink-400 hover:bg-pink-50'}`}
+          >
+            <Book size={20} />
+            <span className="font-bold text-[10px]">图鉴</span>
           </button>
 
           <button 
             onClick={() => setCurrentTab(Tab.INVENTORY)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-all duration-300 active:scale-95
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-full transition-all duration-300 active:scale-95
               ${currentTab === Tab.INVENTORY 
                 ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 
                 : 'text-gray-400 hover:text-pink-400 hover:bg-pink-50'}`}
           >
             <Grid size={20} />
-            <span className="font-bold text-sm">收藏夹</span>
+            <span className="font-bold text-[10px]">收藏夹</span>
           </button>
         </nav>
       </div>

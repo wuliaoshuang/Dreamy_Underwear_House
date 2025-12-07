@@ -16,6 +16,8 @@ export interface GachaItem {
   scent: string;
   owner: string;
   magicValue: number;
+  // Collection tracking
+  collectionId?: string; // matches FEATURED_ITEMS.id or THEMES.id
 }
 
 export const RarityColors = {
@@ -52,6 +54,6 @@ export const GACHA_COST = 100;
 export const RECYCLE_VALUES = {
   [Rarity.COMMON]: 20,
   [Rarity.RARE]: 50,
-  [Rarity.EPIC]: 150,
-  [Rarity.LEGENDARY]: 500
+  [Rarity.EPIC]: 200,   // Increased from 150
+  [Rarity.LEGENDARY]: 600 // Increased from 500
 };
