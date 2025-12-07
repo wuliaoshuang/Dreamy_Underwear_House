@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Rarity, GachaItem, GACHA_COST } from '../types';
 import { generateGachaItem } from '../services/geminiService';
 import { HapticsService } from '../services/hapticsService';
 import { Button } from './Button';
-import { Sparkles, ArrowLeft, PlusCircle, Coins } from 'lucide-react';
+import { Sparkles, ArrowLeft, PlusCircle, Coins, Flower, User, Zap } from 'lucide-react';
 
 interface GachaMachineProps {
   onItemObtained: (item: GachaItem) => void;
@@ -118,13 +119,13 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
     setLastPull(null);
   };
 
-  // The Result Overlay
+  // The Result Overlay - Rendered via Portal
   if (lastPull) {
     const isLegendary = lastPull.rarity === Rarity.LEGENDARY;
     const isEpic = lastPull.rarity === Rarity.EPIC;
 
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    return createPortal(
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         {/* Backdrop with Blur */}
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={resetPull}></div>
         
@@ -135,12 +136,12 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
            </div>
         )}
 
-        {/* Card Reveal Container */}
-        <div className="relative w-full max-w-sm flex flex-col items-center animate-[pop-in_0.6s_cubic-bezier(0.34,1.56,0.64,1)] max-h-[90dvh] overflow-y-auto scrollbar-hide">
+        {/* Card Reveal Container - COMPACT MODE */}
+        <div className="relative w-full max-w-xs sm:max-w-sm flex flex-col items-center animate-[pop-in_0.6s_cubic-bezier(0.34,1.56,0.64,1)]">
             
             {/* Title Badge */}
-            <div className="mb-6 relative z-10 shrink-0">
-                <div className={`px-8 py-2 rounded-full shadow-lg text-lg font-bold border-4 tracking-widest uppercase transform rotate-1
+            <div className="mb-4 relative z-10 shrink-0">
+                <div className={`px-6 py-1.5 rounded-full shadow-lg text-base font-bold border-4 tracking-widest uppercase transform rotate-1
                   ${isLegendary ? 'bg-yellow-400 border-yellow-200 text-yellow-900 shadow-yellow-500/50' : 
                     isEpic ? 'bg-purple-400 border-purple-200 text-white shadow-purple-500/50' : 
                     lastPull.rarity === Rarity.RARE ? 'bg-pink-400 border-pink-200 text-white shadow-pink-500/50' : 
@@ -149,36 +150,55 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
                 </div>
             </div>
 
-            {/* The Card */}
-            <div className={`relative p-3 rounded-3xl bg-white shadow-2xl -rotate-1 shrink-0
+            {/* The Card - Compact */}
+            <div className={`relative p-3 rounded-3xl bg-white shadow-2xl -rotate-1 shrink-0 w-full
                 ${isLegendary ? 'shadow-yellow-500/40' : isEpic ? 'shadow-purple-500/40' : 'shadow-black/20'}`}>
                 
                 {/* Holo Overlay for legendary */}
                 {isLegendary && <div className="absolute inset-0 rounded-3xl z-20 holo-effect pointer-events-none mix-blend-overlay opacity-50"></div>}
                 
-                <div className="rounded-2xl overflow-hidden border-2 border-gray-100 relative bg-gray-50">
-                    <img src={lastPull.imageUrl} alt={lastPull.name} className="w-full h-auto object-cover aspect-[3/4] min-w-[240px] max-w-[280px]" />
+                {/* Compact Image */}
+                <div className="rounded-2xl overflow-hidden border-2 border-gray-100 relative bg-gray-50 mx-auto w-3/4 sm:w-2/3">
+                    <img src={lastPull.imageUrl} alt={lastPull.name} className="w-full h-40 sm:h-48 object-cover" />
                 </div>
                 
-                <div className="p-4 text-center">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-1">{lastPull.name}</h2>
-                    <p className="text-sm text-gray-500">{lastPull.description}</p>
+                <div className="p-3 text-center">
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">{lastPull.name}</h2>
+                    
+                    {/* New Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                        <div className="bg-pink-50 p-1.5 rounded-lg flex flex-col items-center justify-center">
+                            <span className="text-[9px] text-gray-400 flex items-center gap-0.5"><User size={8} /> 所有者</span>
+                            <span className="text-[10px] font-bold text-pink-500 line-clamp-1">{lastPull.owner || '未知'}</span>
+                        </div>
+                         <div className="bg-pink-50 p-1.5 rounded-lg flex flex-col items-center justify-center">
+                            <span className="text-[9px] text-gray-400 flex items-center gap-0.5"><Flower size={8} /> 气味</span>
+                            <span className="text-[10px] font-bold text-pink-500 line-clamp-1">{lastPull.scent || '未知'}</span>
+                        </div>
+                         <div className="bg-pink-50 p-1.5 rounded-lg flex flex-col items-center justify-center">
+                            <span className="text-[9px] text-gray-400 flex items-center gap-0.5"><Zap size={8} /> 魔力</span>
+                            <span className="text-[10px] font-bold text-purple-500">{lastPull.magicValue || 0}</span>
+                        </div>
+                    </div>
+
+                    <p className="text-xs text-gray-500 line-clamp-2">{lastPull.description}</p>
                 </div>
             </div>
 
             {/* Buttons */}
-            <div className="mt-8 flex flex-col gap-3 z-10 w-full px-8 pb-8 shrink-0">
-                <Button onClick={handlePull} isLoading={isPulling} disabled={currency < GACHA_COST} className="shadow-xl shadow-pink-500/30 w-full">
-                   <span className="flex items-center gap-1">
-                     再抽一次 <span className="text-xs bg-black/20 px-2 py-0.5 rounded-full flex items-center gap-1"><Coins size={10} /> {GACHA_COST}</span>
+            <div className="mt-6 flex flex-col gap-2 z-10 w-full px-6 shrink-0">
+                <Button onClick={handlePull} isLoading={isPulling} disabled={currency < GACHA_COST} className="shadow-xl shadow-pink-500/30 w-full py-2.5">
+                   <span className="flex items-center gap-1 text-sm">
+                     再抽一次 <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded-full flex items-center gap-1"><Coins size={8} /> {GACHA_COST}</span>
                    </span>
                 </Button>
-                <Button onClick={resetPull} variant="secondary" className="bg-white/90 backdrop-blur w-full">
-                  <ArrowLeft size={18} /> 返回
+                <Button onClick={resetPull} variant="secondary" className="bg-white/90 backdrop-blur w-full py-2.5 text-sm">
+                  <ArrowLeft size={16} /> 收下并返回
                 </Button>
             </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 

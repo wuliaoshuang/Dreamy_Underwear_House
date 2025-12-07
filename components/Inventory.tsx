@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { GachaItem, RarityColors, RECYCLE_VALUES, Rarity } from '../types';
 import { Card } from './Card';
-import { Heart, PackageOpen, X, Coins, Sparkles, Trash2 } from 'lucide-react';
+import { Heart, PackageOpen, X, Sparkles, Trash2, Flower, User, Zap } from 'lucide-react';
 import { Button } from './Button';
 import { HapticsService } from '../services/hapticsService';
 
@@ -41,7 +42,6 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
   const handleSell = () => {
     if (selectedItem) {
         HapticsService.heavy(); // 删除卡片时的重度反馈
-        // Confirmation is implicit in the secondary action, making it snappy
         onSellItem(selectedItem.id);
         setSelectedItem(null);
     }
@@ -70,59 +70,79 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
       </div>
 
       {/* Item Detail Modal */}
-      {selectedItem && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {selectedItem && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedItem(null)}></div>
              
-             <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-[pop-in_0.3s_cubic-bezier(0.34,1.56,0.64,1)] flex flex-col max-h-[85dvh]">
+             <div className="relative w-full max-w-xs sm:max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-[pop-in_0.3s_cubic-bezier(0.34,1.56,0.64,1)] flex flex-col">
                 {/* Header */}
-                <div className={`${RarityColors[selectedItem.rarity].bg} p-4 flex justify-between items-center border-b border-black/5 shrink-0`}>
+                <div className={`${RarityColors[selectedItem.rarity].bg} px-4 py-3 flex justify-between items-center border-b border-black/5 shrink-0`}>
                      <div className="flex flex-col">
-                        <span className={`text-xs font-bold ${RarityColors[selectedItem.rarity].text}`}>{selectedItem.rarity}</span>
-                        <h3 className="text-lg font-bold text-gray-800">{selectedItem.name}</h3>
+                        <span className={`text-[10px] font-bold ${RarityColors[selectedItem.rarity].text} uppercase tracking-wider`}>{selectedItem.rarity}</span>
+                        <h3 className="text-base font-bold text-gray-800 line-clamp-1">{selectedItem.name}</h3>
                      </div>
                      <button onClick={() => {
                        HapticsService.light();
                        setSelectedItem(null);
-                     }} className="bg-white/50 p-2 rounded-full hover:bg-white transition-colors">
-                         <X size={20} className="text-gray-500" />
+                     }} className="bg-white/50 p-1.5 rounded-full hover:bg-white transition-colors">
+                         <X size={18} className="text-gray-500" />
                      </button>
                 </div>
 
-                {/* Image Scrollable Area */}
-                <div className="overflow-y-auto flex-1 p-4 bg-gray-50">
-                    <div className="rounded-2xl overflow-hidden border-2 border-white shadow-md mb-4 relative min-h-[200px] bg-white">
+                {/* Content Area */}
+                <div className="flex-1 p-4 bg-gray-50 overflow-y-auto max-h-[70vh]">
+                    {/* Compact Image */}
+                    <div className="rounded-xl overflow-hidden border-2 border-white shadow-md mb-4 relative bg-white mx-auto w-3/4 sm:w-2/3">
                         {selectedItem.rarity === Rarity.LEGENDARY && <div className="absolute inset-0 z-10 holo-effect opacity-30 pointer-events-none mix-blend-overlay"></div>}
-                        <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-full h-auto object-cover" />
+                        <img 
+                          src={selectedItem.imageUrl} 
+                          alt={selectedItem.name} 
+                          className="w-full h-40 sm:h-48 object-cover" 
+                        />
                     </div>
                     
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <h4 className="font-bold text-gray-600 text-sm mb-1 flex items-center gap-1">
-                            <Sparkles size={14} className="text-pink-400" /> 物品描述
-                        </h4>
-                        <p className="text-gray-500 text-sm leading-relaxed">{selectedItem.description}</p>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="bg-white p-2 rounded-xl border border-pink-100 flex flex-col items-center justify-center text-center shadow-sm">
+                            <span className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1"><User size={10} /> 所有者</span>
+                            <span className="text-xs font-bold text-pink-500 line-clamp-1">{selectedItem.owner || '??'}</span>
+                        </div>
+                        <div className="bg-white p-2 rounded-xl border border-pink-100 flex flex-col items-center justify-center text-center shadow-sm">
+                            <span className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1"><Flower size={10} /> 气味</span>
+                            <span className="text-xs font-bold text-pink-500 line-clamp-1">{selectedItem.scent || '未知'}</span>
+                        </div>
+                        <div className="bg-white p-2 rounded-xl border border-pink-100 flex flex-col items-center justify-center text-center shadow-sm">
+                            <span className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1"><Zap size={10} /> 魔力</span>
+                            <span className="text-xs font-bold text-purple-500">{selectedItem.magicValue || 0}</span>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                        <p className="text-gray-500 text-xs leading-relaxed">{selectedItem.description}</p>
                     </div>
                 </div>
 
                 {/* Actions Footer */}
-                <div className="p-4 bg-white border-t border-gray-100 flex gap-3 shrink-0">
+                <div className="p-3 bg-white border-t border-gray-100 flex gap-2 shrink-0">
                     <button 
                         onClick={handleSell}
-                        className="flex-1 bg-red-50 text-red-500 font-bold py-3 rounded-2xl hover:bg-red-100 transition-colors flex items-center justify-center gap-1 border border-red-100"
+                        className="flex-1 bg-red-50 text-red-500 font-bold py-2 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-1 border border-red-100"
                     >
-                        <Trash2 size={18} />
-                        <span className="flex flex-col items-start leading-none text-xs">
-                             <span className="text-[10px] opacity-70">化为星尘</span>
-                             <span className="text-sm">+{RECYCLE_VALUES[selectedItem.rarity]} 币</span>
+                        <Trash2 size={16} />
+                        <span className="flex flex-col items-start leading-none">
+                             <span className="text-[9px] opacity-70">化为星尘</span>
+                             <span className="text-xs font-bold">+{RECYCLE_VALUES[selectedItem.rarity]}</span>
                         </span>
                     </button>
                     
-                    <Button onClick={() => setSelectedItem(null)} className="flex-[2]">
+                    <Button onClick={() => setSelectedItem(null)} className="flex-[2] py-2 text-sm rounded-xl">
                         太可爱了，留下！
                     </Button>
                 </div>
              </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

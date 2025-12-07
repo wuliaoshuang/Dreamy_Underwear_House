@@ -12,6 +12,10 @@ export interface GachaItem {
   imageUrl: string;
   description: string;
   timestamp: number;
+  // New properties
+  scent: string;
+  owner: string;
+  magicValue: number;
 }
 
 export const RarityColors = {

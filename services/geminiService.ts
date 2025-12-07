@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Rarity } from "../types";
+import { Rarity, GachaItem } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -40,6 +40,18 @@ const FEELINGS = [
   "舒适得让人不想脱下来。", "让你在梦中也能保持可爱。"
 ];
 
+// New Lists for properties
+const SCENTS = [
+  "清晨露水味", "甜牛奶味", "草莓软糖味", "阳光晒过的棉被味", 
+  "淡雅茉莉香", "海盐香草味", "蜂蜜柚子味", "婴儿爽身粉味",
+  "樱花布丁味", "焦糖饼干味"
+];
+
+const OWNERS = [
+  "爱丽丝", "初音", "小樱", "月野兔", "不知名的公主", 
+  "邻家妹妹", "魔法少女小圆", "森林精灵", "云端天使", "未来的你"
+];
+
 function getRandomElement<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -54,13 +66,29 @@ function getWeightedType() {
   return TYPES[0];
 }
 
-export const generateGachaItem = async (rarity: Rarity): Promise<{ imageUrl: string, name: string, description: string }> => {
+// Generate magic value based on rarity
+function generateMagicValue(rarity: Rarity): number {
+  switch (rarity) {
+    case Rarity.COMMON: return Math.floor(Math.random() * 50) + 10;
+    case Rarity.RARE: return Math.floor(Math.random() * 150) + 60;
+    case Rarity.EPIC: return Math.floor(Math.random() * 400) + 250;
+    case Rarity.LEGENDARY: return Math.floor(Math.random() * 1000) + 888;
+    default: return 0;
+  }
+}
+
+export const generateGachaItem = async (rarity: Rarity): Promise<Omit<GachaItem, 'id' | 'timestamp'>> => {
   const theme = getRandomElement(THEMES);
   const style = getRandomElement(STYLES);
   const type = getWeightedType();
   const fabric = getRandomElement(FABRICS);
   const detail = getRandomElement(DETAILS);
   const feeling = getRandomElement(FEELINGS);
+  
+  // New props generation
+  const scent = getRandomElement(SCENTS);
+  const owner = getRandomElement(OWNERS);
+  const magicValue = generateMagicValue(rarity);
   
   let promptDetails = "";
   let namePrefix = "";
@@ -137,7 +165,11 @@ export const generateGachaItem = async (rarity: Rarity): Promise<{ imageUrl: str
     return {
       imageUrl,
       name: generatedName,
-      description
+      description,
+      scent,
+      owner,
+      magicValue,
+      rarity
     };
 
   } catch (error) {
@@ -146,7 +178,11 @@ export const generateGachaItem = async (rarity: Rarity): Promise<{ imageUrl: str
     return {
       imageUrl: `https://picsum.photos/300/400?random=${Date.now()}`,
       name: "未知错误物品",
-      description: "AI 似乎在编织梦境时打了个盹，请稍后再试..."
+      description: "AI 似乎在编织梦境时打了个盹，请稍后再试...",
+      scent: "未知",
+      owner: "未知",
+      magicValue: 0,
+      rarity
     };
   }
 };
