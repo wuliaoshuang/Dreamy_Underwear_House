@@ -3,6 +3,7 @@ import { GachaMachine } from './components/GachaMachine';
 import { Inventory } from './components/Inventory';
 import { GachaItem, GACHA_COST, RECYCLE_VALUES } from './types';
 import { Grid, Gift, Cat, Cloud, Coins } from 'lucide-react';
+import { HapticsService } from './services/hapticsService';
 
 enum Tab {
   GACHA = 'gacha',
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   const handleSellItem = (id: string) => {
     const itemToSell = inventory.find(i => i.id === id);
     if (itemToSell) {
+      HapticsService.medium(); // 出售时触发中等反馈
       const value = RECYCLE_VALUES[itemToSell.rarity];
       setInventory(prev => prev.filter(i => i.id !== id));
       setCurrency(prev => prev + value);
@@ -115,7 +117,10 @@ const App: React.FC = () => {
       <div className="absolute bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none safe-bottom-padding">
         <nav className="bg-white/95 backdrop-blur-xl border border-pink-100 p-1.5 rounded-full shadow-2xl flex items-center gap-1 pointer-events-auto w-[85%] max-w-xs justify-between">
           <button 
-            onClick={() => setCurrentTab(Tab.GACHA)}
+            onClick={() => {
+              HapticsService.light();
+              setCurrentTab(Tab.GACHA);
+            }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-all duration-300 active:scale-95
               ${currentTab === Tab.GACHA 
                 ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 
@@ -126,7 +131,10 @@ const App: React.FC = () => {
           </button>
 
           <button 
-            onClick={() => setCurrentTab(Tab.INVENTORY)}
+            onClick={() => {
+              HapticsService.light();
+              setCurrentTab(Tab.INVENTORY);
+            }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-all duration-300 active:scale-95
               ${currentTab === Tab.INVENTORY 
                 ? 'bg-pink-400 text-white shadow-lg shadow-pink-300/50' 

@@ -3,6 +3,7 @@ import { GachaItem, RarityColors, RECYCLE_VALUES, Rarity } from '../types';
 import { Card } from './Card';
 import { Heart, PackageOpen, X, Coins, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from './Button';
+import { HapticsService } from '../services/hapticsService';
 
 interface InventoryProps {
   items: GachaItem[];
@@ -39,6 +40,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
 
   const handleSell = () => {
     if (selectedItem) {
+        HapticsService.heavy(); // 删除卡片时的重度反馈
         // Confirmation is implicit in the secondary action, making it snappy
         onSellItem(selectedItem.id);
         setSelectedItem(null);
@@ -56,7 +58,14 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
         {sortedItems.map((item) => (
-          <Card key={item.id} item={item} onClick={() => setSelectedItem(item)} />
+          <Card 
+            key={item.id} 
+            item={item} 
+            onClick={() => {
+              HapticsService.light(); // 点击卡片时的轻微反馈
+              setSelectedItem(item);
+            }} 
+          />
         ))}
       </div>
 
@@ -72,7 +81,10 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onSellItem }) => {
                         <span className={`text-xs font-bold ${RarityColors[selectedItem.rarity].text}`}>{selectedItem.rarity}</span>
                         <h3 className="text-lg font-bold text-gray-800">{selectedItem.name}</h3>
                      </div>
-                     <button onClick={() => setSelectedItem(null)} className="bg-white/50 p-2 rounded-full hover:bg-white transition-colors">
+                     <button onClick={() => {
+                       HapticsService.light();
+                       setSelectedItem(null);
+                     }} className="bg-white/50 p-2 rounded-full hover:bg-white transition-colors">
                          <X size={20} className="text-gray-500" />
                      </button>
                 </div>

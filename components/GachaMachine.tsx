@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Rarity, GachaItem, GACHA_COST } from '../types';
 import { generateGachaItem } from '../services/geminiService';
+import { HapticsService } from '../services/hapticsService';
 import { Button } from './Button';
 import { Sparkles, ArrowLeft, PlusCircle, Coins } from 'lucide-react';
 
@@ -52,9 +53,13 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
   const handlePull = async () => {
     if (isPulling) return;
     if (currency < GACHA_COST) {
+      HapticsService.warning(); // 余额不足时的警告反馈
       alert("星光币不足哦！快去把不喜欢的卡片变成星尘，或者领取每日补给吧！");
       return;
     }
+    
+    // 开始拉动时触发反馈
+    HapticsService.medium();
     
     setIsPulling(true);
     setAnimationStage('cranking');
@@ -71,6 +76,7 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
       
       // Phase 2: Ball Dropping (0.8s)
       setAnimationStage('dropping');
+      HapticsService.light(); // 球掉落时的反馈
       await new Promise(resolve => setTimeout(resolve, 800)); 
 
       // Phase 3: Reveal
@@ -84,10 +90,14 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
         timestamp: Date.now()
       };
 
+      // 根据稀有度触发不同的反馈
+      await HapticsService.rarityFeedback(rarity);
+
       setLastPull(newItem);
       onItemObtained(newItem);
     } catch (e) {
       console.error(e);
+      HapticsService.error(); // 错误时的反馈
       alert("AI 好像睡着了，请稍后再试！(不扣费)");
     } finally {
       setIsPulling(false);
@@ -97,6 +107,7 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
 
   const handleDailyBonus = () => {
     if (!isDailyClaimed) {
+      HapticsService.success(); // 领取奖励时的成功反馈
       onAddCoins(500);
       setIsDailyClaimed(true);
       alert("领取成功！获得了 500 星光币！");
@@ -178,7 +189,10 @@ export const GachaMachine: React.FC<GachaMachineProps> = ({ onItemObtained, curr
       {/* Visual Machine */}
       <div 
         className={`relative group cursor-pointer transform transition-transform duration-200 scale-95 sm:scale-100 ${animationStage === 'cranking' ? 'animate-[shake-hard_0.4s_ease-in-out_infinite]' : ''}`} 
-        onClick={handlePull}
+        onClick={() => {
+          HapticsService.light(); // 点击扭蛋机时的轻微反馈
+          handlePull();
+        }}
       >
         {/* Top Dome Container */}
         {/* Responsive width/height */}

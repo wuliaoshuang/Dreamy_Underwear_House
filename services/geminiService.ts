@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { Rarity } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Vocabulary Lists for random generation
 const THEMES = [

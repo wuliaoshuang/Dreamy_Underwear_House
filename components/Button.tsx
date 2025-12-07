@@ -1,8 +1,10 @@
 import React from 'react';
+import { HapticsService } from '../services/hapticsService';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
   isLoading?: boolean;
+  disableHaptics?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -11,6 +13,8 @@ export const Button: React.FC<ButtonProps> = ({
   isLoading, 
   className = '', 
   disabled,
+  disableHaptics = false,
+  onClick,
   ...props 
 }) => {
   const baseStyles = "relative overflow-hidden px-8 py-3 rounded-2xl font-bold transition-all duration-200 shadow-md flex items-center justify-center gap-2 jelly-active disabled:opacity-60 disabled:cursor-not-allowed";
@@ -21,10 +25,23 @@ export const Button: React.FC<ButtonProps> = ({
     danger: "bg-red-400 hover:bg-red-300 text-white"
   };
 
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disableHaptics && !disabled && !isLoading) {
+      // 根据按钮类型触发不同强度的反馈
+      if (variant === 'danger') {
+        await HapticsService.medium();
+      } else {
+        await HapticsService.light();
+      }
+    }
+    onClick?.(e);
+  };
+
   return (
     <button 
       className={`${baseStyles} ${variants[variant]} ${className}`}
       disabled={disabled || isLoading}
+      onClick={handleClick}
       {...props}
     >
       {isLoading ? (
